@@ -1,0 +1,87 @@
+@page "/create-product/{PriceListId:long}"
+@using Microsoft.EntityFrameworkCore
+@using WebApplication1.EfCore
+@using WebApplication1.EfCore.Models
+@inject PriceListDbContext DbContext;
+@code {
+    [Parameter]public long PriceListId { get; set; }
+    List<ColumnData> ColumnsData { get; set; } = [];
+    protected override async Task OnInitializedAsync()
+    {
+        var priceList = await DbContext.PriceLists.Include(c => c.Columns).FirstAsync(c => c.Id == PriceListId);
+        ColumnsData = priceList.Columns.Select(c => new ColumnData
+        {
+            Name = c.PropName,
+            ColumnTypeId = c.PropTypeId
+        }).ToList();
+    }
+    public class ColumnData
+    {
+        public string Name { get; set; } = null!;
+        public long ColumnTypeId { get; set; }
+        //в DbContext есть инициализация изначальным возможными типами данных для пользователя
+        //чтобы по айди не гадать какой тип используется Enum
+        //где числовое значение enum соответствует id в бд
+        public ColumnTypeEnum ColumnTypeEnum => (ColumnTypeEnum)ColumnTypeId;
+        public bool IsTextarea => ColumnTypeEnum == ColumnTypeEnum.Text;
+        public string InputType => ColumnTypeEnum switch
+        {
+            ColumnTypeEnum.Number => "number",
+            ColumnTypeEnum.Text => string.Empty,
+            ColumnTypeEnum.String => "text",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+}
+<h3 class="text-2xl mb-4">Создание продукта</h3>
+<div class="button-navigation mb-4">
+    <button onclick="сreateProduct()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Создать</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="NavigateTo('/price-list/@PriceListId')">Назад</button>
+</div>
+<table class="product-creation-container border-spacing-2 table-auto border-separate mb-4" priceListId="@PriceListId">
+    <tbody>
+    <tr>
+        <td>
+            <div class="p-3 bg-gray-100 rounded">
+                Название*
+            </div>
+        </td>
+        <td>
+            <input class="product-name-input p-3 bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold rounded"/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="p-3 bg-gray-100 rounded">
+                Артикул*
+            </div>
+        </td>
+        <td>
+            <input class="product-articul-input p-3 bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold rounded"/>
+        </td>
+    </tr>
+        @foreach (var column in ColumnsData)
+        {
+    <tr>
+        <td>
+            <div class="p-3 bg-gray-100 rounded">
+                @column.Name
+            </div>
+        </td>
+        <td>
+            <div>
+                @if (column.IsTextarea)
+                {
+                <textarea class="column-value p-3 bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold rounded w-full" columnName="@column.Name" columnType="@column.ColumnTypeId"></textarea>
+                }
+                else
+                {
+                <input class="column-value p-3 bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold rounded w-full" columnName="@column.Name" columnType="@column.ColumnTypeId" type="@column.InputType"/>
+                }
+            </div>
+        </td>
+    </tr>
+    }
+    </tbody>
+</table>
+<script src="/js/components/create-product.js"></script>

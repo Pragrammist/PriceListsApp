@@ -1,0 +1,102 @@
+@page "/create-price-list"
+@using System.Text.Json
+@using Microsoft.EntityFrameworkCore
+@using WebApplication1.EfCore
+@inject PriceListDbContext PriceListDbContext;
+
+@code
+{
+    public class PriceColumn
+    {
+        public string ColumnName { get; set; } = null!;
+        public long SelectedTypeId { get; set; }
+        public class ColumnType
+        {
+            public long Id { get; set; }
+            public string Name { get; set; } = null!;
+        }
+    }
+
+    List<PriceColumn> Columns { get; set; } = [];
+    List<PriceColumn.ColumnType> ColumnTypeVariants { get; set; } = [];
+    protected override async Task OnInitializedAsync()
+    {
+        ColumnTypeVariants = await GetColumnTypeVariants();
+        Columns = await GetColumns();
+    }
+
+    async Task<List<PriceColumn.ColumnType>> GetColumnTypeVariants()
+    {
+        var columnTypeVariants = await PriceListDbContext.PriceColumnPropTypes
+            .Select(p => new PriceColumn.ColumnType
+            {
+                Id = p.Id,
+                Name = p.Name
+            })
+            .ToListAsync();
+        return columnTypeVariants;
+    } 
+    async Task<List<PriceColumn>> GetColumns()
+    {
+        var columns = await
+            PriceListDbContext.PriceColumns.Include(pc => pc.PropType)
+                .Select(pc => new PriceColumn
+                {
+                    ColumnName = pc.PropName,
+                    SelectedTypeId = pc.PropTypeId
+                })
+                .ToListAsync();
+        return columns;
+    }
+}
+<h3 class="text-2xl mb-4">Создание прайс-листа</h3>
+<div class="button-navigation">
+    <button class="create-price-list-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="CreatePriceListColumn(event)">Продолжить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="NavigateBack()">Назад</button>
+</div>
+<div class="create-price-list-form ">
+    <table class="price-list-columns border-spacing-2 table-auto border-separate mb-4" column-lenth column-type-variants="@JsonSerializer.Serialize(ColumnTypeVariants)">
+        
+        <thead>
+        <tr>
+            <th colspan="4">
+                <input class="create-price-name p-3 bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold rounded w-full" type="text" name="name" value="прайс лист от @DateTime.Now.ToString("d")"/>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        @{
+            var iterator = 1;
+        }
+        @foreach (var column in Columns)
+        {
+            <tr>
+                <td>
+                    <div class="p-3 bg-gray-100 rounded">
+                        @($"#{iterator}")
+                    </div>
+                </td>
+                <td>
+                    <input class="p-3 bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold rounded w-full" value="@column.ColumnName"/>
+                </td>
+                <td>
+                    <select class="p-3 bg-gray-100 rounded">
+                        @foreach (var columnType in ColumnTypeVariants)
+                        {
+                            <option value="@columnType.Id" selected="@(columnType.Id == column.SelectedTypeId)" >@columnType.Name</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <button onclick="RemoveDeleteButton(event)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Удалить</button>
+                </td>
+            </tr>
+            iterator++;
+        }
+        </tbody>
+    </table>
+    <button onclick="AddButtonEvent(event)" class="add-column bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Добавить колонку</button>
+</div>
+
+<script src="/js/components/create-price-list.js"></script>
+

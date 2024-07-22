@@ -1,0 +1,73 @@
+@page "/price-lists/{Page:int?}"
+@page "/{Page:int?}"
+@using MediatR
+@inject IMediator Mediator
+@code {
+    [Parameter] public int Page { get; set; }
+    List<PriceList> PriceLists { get; set; } = [];
+    protected override async Task OnInitializedAsync()
+    {
+        PriceLists = await Mediator.Send(new ShowPriceListsRequest { Page = Page });
+    }
+
+}
+
+<h3 class="text-2xl mb-4">Прайсы</h3>
+<div class="button-navigation mb-4">
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="NavigateTo('/create-price-list')">Прайс-лист</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="NavigateBack()">Назад</button>
+</div>
+
+
+<table class="price-lists border-spacing-2 table-auto border-separate mb-4">
+    <thead>
+    <tr>
+        <th onclick="OrderColumn(event)" class="bg-gray-100 rounded">
+            <div class="p-3">
+                Номер
+            </div>
+        </th>
+        <th onclick="OrderColumn(event)" class="bg-gray-100 rounded">
+            <div class="p-3">
+                Индетификатор
+            </div>
+        </th>
+        <th onclick="OrderColumn(event)" class="bg-gray-100 rounded">
+            <div class="p-3">
+                Название
+            </div>
+        </th>
+    </tr>
+    </thead>
+    <tbody>
+    @{
+        var iterator = 1;
+    }
+    @foreach (var priceList in PriceLists)
+    {
+        <tr>
+            <td class="bg-gray-100 rounded">
+                <div class="p-2">
+                    #@iterator
+                </div>
+            </td>
+            <td class="bg-gray-100 rounded">
+                <div class="p-2">
+                    @(priceList.Id)
+                </div>
+            </td>
+            <td class="bg-gray-100 rounded">
+                <div class="my-ref p-2 bg-gray-100 hover:bg-gray-200 rounded" onclick="NavigateTo('/price-list/@priceList.Id')">@priceList.Name</div>
+            </td>
+        </tr>
+        iterator++;
+    }
+    </tbody>
+</table>
+<div class="buttons-pagination mb-4">
+    @if (Page > 0)
+    {
+        <button class="my-ref bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded" onclick="NavigateTo('/price-lists/@(Page - 1)')">Предыдущая</button>
+    }
+    <button class="my-ref bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded" onclick="NavigateTo('/price-lists/@(Page + 1)')">Следующая</button>
+</div>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <title>Привет!</title>
+        <script src="/_framework/blazor.web.js"></script>
+        <script src="/js/signalr.min.js"></script>
+        <script src="/js/open-signalr-connection.js"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="p-5">
+    <Router AppAssembly="@typeof(Program).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData"  />
+        </Found>
+    </Router>
+    <script src="/js/navigator.js"></script>
+    <script src="/js/table-order.js"></script>
+    </body>
+</html>

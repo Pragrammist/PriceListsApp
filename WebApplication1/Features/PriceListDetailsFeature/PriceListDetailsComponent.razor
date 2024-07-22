@@ -1,0 +1,88 @@
+@page "/price-list/{Id:long}/{Page:int?}"
+@using MediatR
+
+@inject IMediator Mediator;
+@code {
+    [Parameter]public long Id { get; set; }
+    [Parameter] public int Page { get; set; } = 0;
+    
+    PriceListDetails PriceListDetails { get; set; } = new PriceListDetails
+    {
+        Name = string.Empty,
+        
+    };
+    
+    
+    
+    protected override async Task OnInitializedAsync()
+    {
+        PriceListDetails = await Mediator.Send(new PriceListDetailsRequest { Id = Id, Page = Page});
+    }
+
+}
+<h3 class="text-2xl mb-4">@PriceListDetails.Name</h3>
+
+<div class="button-navigation mb-4">
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="NavigateTo('/create-product/@Id')">Продукт</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="NavigateTo('/price-lists')">Назад</button>
+</div>
+<table class="products-table border-spacing-2 table-auto border-separate mb-4">
+    <thead>
+    <tr>
+        <th onclick="OrderColumn(event)">
+            <div class="p-3 bg-gray-100 hover:bg-gray-200 font-bold rounded">
+                Название
+            </div>
+        </th>
+        <th onclick="OrderColumn(event)">
+            <div class="p-3 bg-gray-100 hover:bg-gray-200 font-bold rounded">
+                Артикул
+            </div>
+        </th>
+        @foreach (var header in PriceListDetails.HeadersData)
+        {
+            <th onclick="OrderColumn(event)">
+                <div class="p-3 bg-gray-100 hover:bg-gray-200 rounded">
+                    @header.ColumnName
+                </div>
+            </th>
+        }
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var product in PriceListDetails.Products)
+    {
+        <tr>
+            <td class="bg-gray-100 rounded">
+                <div class="p-2">
+                    @product.Name
+                </div>
+            </td>
+            <td class="bg-gray-100 rounded">
+                <div class="p-2">
+                    @product.Articul
+                </div>
+            </td>
+            @foreach (var columnValue in product.ColumnValues)
+            {
+                <td class="bg-gray-100 rounded">
+                    <div class="p-2 bg-gray-100">
+                        @columnValue.Value
+                    </div>
+                </td>
+            }
+            <td><button onclick="deleteProduct(event)" productId="@product.Id" class="delete-product bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Удалить</button></td>
+        </tr>
+    }
+    </tbody>
+</table>
+<div class="buttons-pagination">
+    @if (Page > 0)
+    {
+        <button class="my-ref bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded" onclick="NavigateTo('/price-list/@Id/@(Page - 1)')">Предыдущая</button>
+    }
+    <button class="my-ref bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded" onclick="NavigateTo('/price-list/@Id/@(Page + 1)')">Следующая</button>
+</div>
+
+
+<script src="/js/components/price-list-details.js"></script>
